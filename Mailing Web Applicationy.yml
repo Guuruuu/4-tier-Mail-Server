@@ -1,0 +1,791 @@
+AWSTemplateFormatVersion: "2010-09-09"
+
+Description: Mail Web Application
+
+Resources:
+  ProdVPC:
+    Type: AWS::EC2::VPC
+    Properties: 
+      CidrBlock: 10.0.0.0/16
+      EnableDnsSupport: 'true'
+      EnableDnsHostnames: 'true'
+      Tags: 
+        - Key: Name
+          Value: Prod-VPC
+      
+# The NAT/ALB subnets
+
+  NatAlbSubnet1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref ProdVPC
+      AvailabilityZone:  us-east-1a
+      CidrBlock: 10.0.5.0/24 
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: Prod-NAT-ALB-Subnet-1
+          
+  NatAlbSubnet2:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref ProdVPC
+      AvailabilityZone: us-east-1b
+      CidrBlock: 10.0.10.0/24 
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: Prod-NAT-ALB-Subnet-2
+
+# The Webserver Subnets
+
+  WebserverSubnet1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref ProdVPC
+      AvailabilityZone: us-east-1a
+      CidrBlock: 10.0.15.0/24 
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: Prod-WebServer-Subnet-1
+
+  WebserverSubnet2:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref ProdVPC
+      AvailabilityZone: us-east-1b
+      CidrBlock: 10.0.20.0/24 
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: Prod-WebServer-Subnet-2
+
+#The Appserver Subnets
+
+  AppserverSubnet1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref ProdVPC
+      AvailabilityZone: us-east-1a
+      CidrBlock: 10.0.25.0/24 
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: Prod-AppServer-Subnet-1
+
+  AppserverSubnet2:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref ProdVPC
+      AvailabilityZone: us-east-1b
+      CidrBlock: 10.0.30.0/24 
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: Prod-AppServer-Subnet-2
+
+# The Database Subnets
+
+  DatabaseSubnet1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref ProdVPC
+      AvailabilityZone: us-east-1a
+      CidrBlock: 10.0.35.0/24 
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: Prod-db-Subnet-1
+
+  DatabaseSubnet2:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref ProdVPC
+      AvailabilityZone: us-east-1b
+      CidrBlock: 10.0.40.0/24 
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: Prod-db-Subnet-2
+
+# Public Route table for NAT/ALB 1 and 2 along with subnet associations
+
+  NatALBPublicRouteTable1:
+     Type: AWS::EC2::RouteTable
+     Properties: 
+       VpcId: !Ref ProdVPC
+       Tags:
+         - Key: Name
+           Value: Prod-NAT-ALB-Public_RT-1
+
+  NatALBPublicRouteTable1SubnetRouteTableAssociation1:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties: 
+      RouteTableId: !Ref NatALBPublicRouteTable1
+      SubnetId: !Ref NatAlbSubnet1
+
+  NatALBPublicRouteTable2:
+    Type: AWS::EC2::RouteTable
+    Properties: 
+      VpcId: !Ref ProdVPC
+      Tags:
+        - Key: Name
+          Value: Prod-NAT-ALB-Public_RT-2
+
+  NatALBPublicRouteTable2SubnetRouteTableAssociation2:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties: 
+      RouteTableId: !Ref NatALBPublicRouteTable2
+      SubnetId: !Ref NatAlbSubnet2
+
+# Public Route table for Webservers 1 and 2 along with subnet association 
+
+  WebserverPublicRouteTable1:
+     Type: AWS::EC2::RouteTable
+     Properties: 
+       VpcId: !Ref ProdVPC
+       Tags:
+         - Key: Name
+           Value: Prod-Webserver-RT-1
+
+  WebserverPublicRouteTable1SubnetRouteTableAssociation1:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties: 
+      RouteTableId: !Ref WebserverPublicRouteTable1
+      SubnetId: !Ref WebserverSubnet1
+
+  WebserverPublicRouteTable2:
+     Type: AWS::EC2::RouteTable
+     Properties: 
+       VpcId: !Ref ProdVPC
+       Tags:
+         - Key: Name
+           Value: Prod-Webserver-RT-2
+
+  WebserverPublicRouteTable2SubnetRouteTableAssociation2:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties: 
+      RouteTableId: !Ref WebserverPublicRouteTable2
+      SubnetId: !Ref WebserverSubnet2
+
+# Route table for appservers 1 and 2 along with subnet association
+
+  AppServerRouteTable1:
+     Type: AWS::EC2::RouteTable
+     Properties: 
+       VpcId: !Ref ProdVPC
+       Tags:
+         - Key: Name
+           Value: Prod-Appserver-RT-1
+
+  AppServerRouteTable1SubnetRouteTableAssociation1:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties: 
+      RouteTableId: !Ref AppServerRouteTable1
+      SubnetId: !Ref AppserverSubnet1
+
+  AppServerRouteTable2:
+     Type: AWS::EC2::RouteTable
+     Properties: 
+       VpcId: !Ref ProdVPC
+       Tags:
+         - Key: Name
+           Value: Prod-Appserver-RT-2
+
+  AppServerRouteTable2SubnetRouteTableAssociation2:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties: 
+      RouteTableId: !Ref AppServerRouteTable2
+      SubnetId: !Ref AppserverSubnet2
+
+# Route table for database 1 and 2 along with subnet association
+
+  DatabaseRouteTable1:
+     Type: AWS::EC2::RouteTable
+     Properties: 
+       VpcId: !Ref ProdVPC
+       Tags:
+         - Key: Name
+           Value: Prod-database-RT-1
+
+  DatabaseRouteTable1SubnetRouteTableAssociation1:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties: 
+      RouteTableId: !Ref DatabaseRouteTable1
+      SubnetId: !Ref DatabaseSubnet1
+
+  DatabaseRouteTable2:
+     Type: AWS::EC2::RouteTable
+     Properties: 
+       VpcId: !Ref ProdVPC
+       Tags:
+         - Key: Name
+           Value: Prod-database-RT-2
+
+  DatabaseRouteTable2SubnetRouteTableAssociation2:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties: 
+      RouteTableId: !Ref DatabaseRouteTable2
+      SubnetId: !Ref DatabaseSubnet2
+
+# IGW for the NAT/ALB Subnet 1 and 2
+
+  InternetGateway:
+    Type: AWS::EC2::InternetGateway
+    Properties:
+      Tags: 
+        - Key: Name
+          Value: Prod-VPC-IGW
+
+  InternetGatewayAttachment:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties: 
+      InternetGatewayId: !Ref InternetGateway
+      VpcId: !Ref ProdVPC
+
+# Public routes for NAT/ALB subnet 1 and 2
+
+  NatAlbPublicRoute1:
+    Type: AWS::EC2::Route
+    DependsOn: InternetGatewayAttachment
+    Properties: 
+      RouteTableId: !Ref NatALBPublicRouteTable1
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref InternetGateway
+
+  NatAlbPublicRoute2:
+    Type: AWS::EC2::Route
+    DependsOn: InternetGatewayAttachment
+    Properties: 
+      RouteTableId: !Ref NatALBPublicRouteTable2
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref InternetGateway
+
+# Routes for Webserver 1 and 2
+
+  WebserverPublicRoute1:
+    Type: AWS::EC2::Route
+    DependsOn: InternetGatewayAttachment
+    Properties: 
+      RouteTableId: !Ref WebserverPublicRouteTable1
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref InternetGateway
+
+  WebserverPublicRoute2:
+    Type: AWS::EC2::Route
+    DependsOn: InternetGatewayAttachment
+    Properties: 
+      RouteTableId: !Ref WebserverPublicRouteTable2
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref InternetGateway
+
+# Routes for Appserver 1 and 2
+
+  AppServerNatGatewayRoute1:
+    Type: AWS::EC2::Route
+    DependsOn: FirstNatGatewayIn1A
+    Properties: 
+      RouteTableId: !Ref AppServerRouteTable1
+      DestinationCidrBlock: 0.0.0.0/0
+      NatGatewayId: !Ref FirstNatGatewayIn1A
+
+  AppServerNatGatewayRoute2:
+    Type: AWS::EC2::Route
+    DependsOn: FirstNatGatewayIn1B
+    Properties: 
+      RouteTableId: !Ref AppServerRouteTable2
+      DestinationCidrBlock: 0.0.0.0/0
+      NatGatewayId: !Ref FirstNatGatewayIn1B
+
+# Nat Gateways that point at the web for the App and Database tiers IN us-east-1a
+  
+  FirstNatGatewayIn1A:
+    Type: AWS::EC2::NatGateway
+    Properties: 
+      AllocationId: !GetAtt NATGatewayEIP1.AllocationId
+      SubnetId: !Ref AppserverSubnet1
+      Tags: 
+        - Key: Name
+          Value: Prod-Nat-Gateway-1a
+
+  NATGatewayEIP1:
+    Type: AWS::EC2::EIP
+    Properties: 
+      Domain: ProdVPC
+      Tags:
+        - Key: Name
+          Value: EIP for AppServer1
+
+  SecondNatGatewayIn1A:
+    Type: AWS::EC2::NatGateway
+    Properties: 
+      AllocationId: !GetAtt NATGatewayEIP2.AllocationId
+      SubnetId: !Ref DatabaseSubnet1
+      Tags: 
+        - Key: Name
+          Value: Prod-Nat-Gateway-1a
+
+  NATGatewayEIP2:
+    Type: AWS::EC2::EIP
+    Properties: 
+      Domain: ProdVPC
+      Tags:
+        - Key: Name
+          Value: EIP for DatabaseServer1
+
+# Nat Gateways that point at the web for the App and Database tiers IN us-east-1b
+
+  FirstNatGatewayIn1B:
+    Type: AWS::EC2::NatGateway
+    Properties: 
+      AllocationId: !GetAtt NATGatewayEIP3.AllocationId
+      SubnetId: !Ref AppserverSubnet2
+      Tags: 
+        - Key: Name
+          Value: Prod-Nat-Gateway-1b
+
+  NATGatewayEIP3:
+    Type: AWS::EC2::EIP
+    Properties: 
+      Domain: ProdVPC
+      Tags:
+        - Key: Name
+          Value: EIP for AppServer2
+
+  SecondNatGatewayIn1B:
+    Type: AWS::EC2::NatGateway
+    Properties: 
+      AllocationId: !GetAtt NATGatewayEIP4.AllocationId
+      SubnetId: !Ref DatabaseSubnet2
+      Tags: 
+        - Key: Name
+          Value: Prod-Nat-Gateway-1b
+
+  NATGatewayEIP4:
+    Type: AWS::EC2::EIP
+    Properties: 
+      Domain: ProdVPC
+      Tags:
+        - Key: Name
+          Value: EIP for DatabaseServer2
+
+#Security Group for the bastion Host
+
+  BastionHostSG:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Allowing access on port 22
+      GroupName: Bastion-Host-Security-Group
+      VpcId: !Ref ProdVPC
+      SecurityGroupIngress:
+      - IpProtocol: tcp
+        FromPort: 22
+        ToPort: 22
+        CidrIp: 0.0.0.0/0
+      Tags:
+        - Key: Name
+          Value: Bastion-Host-Security-Group
+
+# Security Group for the frontend/External Load Balancer
+
+  FrontendLoadBalancerSG:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Allowing access on port 80 and 443
+      GroupName: Frontend-LB-Security-Group
+      VpcId: !Ref ProdVPC
+      Tags:
+        - Key: Name
+          Value: Frontend-LB-Security-Group
+         
+  SecurityGroupIngressSshForFrontendLB:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId: !Ref FrontendLoadBalancerSG
+      IpProtocol: tcp
+      FromPort: 80
+      ToPort: 80
+      CidrIp: 0.0.0.0/0
+  
+  SecurityGroupIngressHttpForFrontendLB:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId: !Ref FrontendLoadBalancerSG
+      IpProtocol: tcp
+      FromPort: 443
+      ToPort: 443
+      CidrIp: 0.0.0.0/0
+  
+# Security Group for the Web Server
+
+  WebServersSG:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Allowing access on port 80 and 443
+      GroupName: Webservers-Security-Group
+      VpcId: !Ref ProdVPC
+      Tags:
+        - Key: Name
+          Value: Webservers-Security-Group
+         
+  SecurityGroupIngressHttpForWebServer:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId: !Ref WebServersSG
+      IpProtocol: tcp
+      FromPort: 80
+      ToPort: 80
+      SourceSecurityGroupId: !GetAtt FrontendLoadBalancerSG.GroupId
+
+  SecurityGroupIngressHttpsForWebServer:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId: !Ref WebServersSG
+      IpProtocol: tcp
+      FromPort: 443
+      ToPort: 443
+      SourceSecurityGroupId: !GetAtt FrontendLoadBalancerSG.GroupId
+
+  SecurityGroupIngressSshForWebServer:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId: !Ref WebServersSG
+      IpProtocol: tcp
+      FromPort: 22
+      ToPort: 22
+      SourceSecurityGroupId: !GetAtt BastionHostSG.GroupId
+  
+# Security Group for the Backend Load Balancer
+
+  BackendLoadBalancerSG:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Allowing access on port 80 and 443
+      GroupName: Backend-LB-Security-Group
+      VpcId: !Ref ProdVPC
+      Tags:
+        - Key: Name
+          Value: Backend-LB-Security-Group
+         
+  SecurityGroupIngressHttpForBackendLoadBalancer:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId: !Ref BackendLoadBalancerSG
+      IpProtocol: tcp
+      FromPort: 80
+      ToPort: 80
+      SourceSecurityGroupId: !GetAtt WebServersSG.GroupId
+
+  SecurityGroupIngressHttpsForBackendLoadBalancer:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId: !Ref BackendLoadBalancerSG
+      IpProtocol: tcp
+      FromPort: 443
+      ToPort: 443
+      SourceSecurityGroupId: !GetAtt WebServersSG.GroupId
+
+# Security Group for the App Servers
+
+  AppServersSG:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Allowing access on port 80 and 443
+      GroupName: Appservers-Security-Group
+      VpcId: !Ref ProdVPC
+      Tags:
+        - Key: Name
+          Value: Appservers-Security-Group
+         
+  SecurityGroupIngressHttpForAppServers:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId: !Ref AppServersSG
+      IpProtocol: tcp
+      FromPort: 80
+      ToPort: 80
+      SourceSecurityGroupId: !GetAtt BackendLoadBalancerSG.GroupId
+
+  SecurityGroupIngressHttpsForAppServers:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId: !Ref AppServersSG
+      IpProtocol: tcp
+      FromPort: 443
+      ToPort: 443
+      SourceSecurityGroupId: !GetAtt BackendLoadBalancerSG.GroupId
+
+  SecurityGroupIngressSshForAppServers:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId: !Ref AppServersSG
+      IpProtocol: tcp
+      FromPort: 22
+      ToPort: 22
+      SourceSecurityGroupId: !GetAtt BastionHostSG.GroupId
+
+#Security Group for the Database 
+
+  DatabaseSG:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Allowing access on port 3306
+      GroupName: Database-Security-Group
+      VpcId: !Ref ProdVPC
+      SecurityGroupIngress:
+      - IpProtocol: tcp
+        FromPort: 3306
+        ToPort: 3306
+        SourceSecurityGroupId: !GetAtt AppServersSG.GroupId
+      - IpProtocol: tcp
+        FromPort: 3306
+        ToPort: 3306
+        SourceSecurityGroupId: !GetAtt BastionHostSG.GroupId
+      Tags:
+        - Key: Name
+          Value: Database-Security-Group
+         
+
+# Creation of the Frontend Load Balancer
+
+  FrontendLoadBalancer:
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    Properties:
+      Type: application
+      Name: Prod-Frontend-LB
+      Scheme: internet-facing
+      IpAddressType: ipv4
+      SecurityGroups: 
+        - !Ref FrontendLoadBalancerSG
+      Subnets: 
+        - !GetAtt NatAlbSubnet1.SubnetId
+        - !GetAtt NatAlbSubnet2.SubnetId
+      Tags: 
+        - Key: Name
+          Value: Frontend-Load-Balancer
+
+  FrontendLoadBalancerTargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+       TargetType: instance
+       Name: Frontend-LB-HTTP-TG
+       Protocol: HTTP
+       Port: 80
+       VpcId: !Ref ProdVPC
+       ProtocolVersion: HTTP1
+       HealthCheckProtocol: HTTP
+       HealthCheckPath: /VentureaMailingApp.php
+
+  FrontendLoadBalancerListner:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      Protocol: HTTP
+      Port: 80
+      LoadBalancerArn: !Ref FrontendLoadBalancer
+      DefaultActions:
+        - Type: forward
+          TargetGroupArn: !Ref FrontendLoadBalancerTargetGroup
+
+# Creation of the Backend Load Balancer
+
+  BackendLoadBalancer:
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    Properties:
+      Type: application
+      Name: Prod-Backend-LB
+      Scheme: internet-facing
+      IpAddressType: ipv4
+      SecurityGroups: 
+        - !Ref BackendLoadBalancerSG
+      Subnets: 
+        - !GetAtt WebserverSubnet1.SubnetId
+        - !GetAtt WebserverSubnet2.SubnetId
+      Tags: 
+        - Key: Name
+          Value: Backend-Load-Balancer
+
+  BackendLoadBalancerTargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+       TargetType: instance
+       Name: Backend-LB-HTTP-TG
+       Protocol: HTTP
+       Port: 80
+       VpcId: !Ref ProdVPC
+       ProtocolVersion: HTTP1
+       HealthCheckProtocol: HTTP
+       HealthCheckPath: /VentureaMailingApp.php
+
+  FrontendLoadBalancerListner:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      Protocol: HTTP
+      Port: 80
+      LoadBalancerArn: !Ref BackendLoadBalancer
+      DefaultActions:
+        - Type: forward
+          TargetGroupArn: !Ref BackendLoadBalancerTargetGroup
+
+# Create a Database Subnet Group and Database Instance (RDS)
+
+  MyDbSubnetgroup:  
+    Type: AWS::RDS::DBSubnetGroup
+    Properties: 
+      DBSubnetGroupDescription: prod-db-subnet-group 
+      SubnetIds: 
+        - !Ref DatabaseSubnet1
+        - !Ref DatabaseSubnet2
+
+
+  DbInstance:
+    Type: AWS::RDS::DBInstance
+    Properties:
+      Engine: MySQL
+      EngineVersion: 8.0.33
+      MultiAZ: true
+      DBInstanceIdentifier: prod-database  
+      MasterUsername: admin  
+      MasterUserPassword: admin12345   
+      DBInstanceClass: db.t3.micro
+      StorageType: gp3
+      AllocatedStorage: 20
+      DBSubnetGroupName: !Ref MyDbSubnetgroup
+      PubliclyAccessible: No
+      DBName: phpappdatebase 
+      StorageEncrypted: true
+      
+# S3 Bucket enviroment to upload automation and database configs
+
+  AutomationDatabaseConfigS3Bucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: prod-proxy-app-db-config-asu-001
+      OwnershipControls:
+        Rules:
+          - ObjectOwnership: BucketOwnerEnforced
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      VersioningConfiguration:
+        Status: Enabled
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256 
+      
+# configuration for a bastion host VM for remotes access (SSH) to webserver, appserver, and MYSQLdatabase
+
+  BastionHostEc2Instance:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: ami-0f34c5ae932e6f0e4
+      InstanceType: t2.micro
+      KeyName: !Ref KeyPair
+      SubnetId: !Ref NatAlbSubnet1
+      SecurityGroupIds: 
+        - !Ref BastionHostSG
+      Tags:
+        - Key: Name 
+          Value: Prod-Bastion-Host
+
+  KeyPair:
+    Type: AWS::EC2::KeyPair
+    Properties: 
+      KeyName: Prod-us-east-1-key
+      PublicKeyMaterial: ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAILyYNb68XZJJujRMS7o3LJ4EltpabjZp0fhmAMyoyRdC
+
+
+#  IAM Role That Grants AmazonS3ReadOnlyAccess To Your Web and App Servers
+
+  S3ReadOnlyIamRole:
+    Type: AWS::IAM::Role
+    Properties: 
+      Description: Provides read only access to s3 for the web and app servers
+      RoleName: EC2-AmazonS3ReadOnlyAccess
+      AssumeRolePolicyDocument: 
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - ec2.amazonaws.com
+            Action:
+              - sts:AssumeRole 
+      Policies: 
+        - PolicyName: CustomS3Policy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action: 's3:GetObject'
+                Resource: 'arn:aws:s3:::prod-proxy-app-db-config-asu-001/*'
+      
+# Launch Template for Webservers
+
+  MyInstanceProfile: 
+    Type: "AWS::IAM::InstanceProfile"
+    Properties: 
+      Roles: 
+        - !Ref S3ReadOnlyIamRole
+
+  WebServerLaunchTemplate:
+    Type: AWS::EC2::LaunchTemplate
+    Properties:
+      LaunchTemplateName: Prod-Webservers-LT
+      VersionDescription: Prod-Webservers-LT Version 1
+      LaunchTemplateData:
+        ImageId: ami-053b0d53c279acc90
+        InstanceType: t2.micro
+        KeyName: !Ref WebAndAppServerKeyPair  
+        SecurityGroups: 
+          - !Ref WebServersSG
+        IamInstanceProfile: 
+          Arn: !GetAtt MyInstanceProfile.Arn
+        NetworkInterfaces:
+          - SubnetId: !Ref WebserverSubnet1
+            AssociatePublicIpAddress: true
+
+
+
+  WebAndAppServerKeyPair:
+    Type: AWS::EC2::KeyPair
+    Properties: 
+      KeyName: MD-Keypair
+      PublicKeyMaterial: ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIJeh13uF6qdt3oxbKwhc4/Dsb/iAR7T09xQP4RStfHUj
+
+
+# Launch Template for Appservers
+
+  AppServerLaunchTemplate:
+    Type: AWS::EC2::LaunchTemplate
+    Properties:
+      LaunchTemplateName: Prod-Appservers-LT
+      VersionDescription: Prod-Appservers-LT Version 1
+      LaunchTemplateData:
+        ImageId: ami-08a52ddb321b32a8c
+        InstanceType: t2.micro
+        KeyName: !Ref WebAndAppServerKeyPair  
+        SecurityGroups: 
+          - !Ref AppServersSG
+        IamInstanceProfile: 
+          Arn: !GetAtt MyInstanceProfile.Arn
+        NetworkInterfaces:
+          - SubnetId: !Ref AppserverSubnet1
+            AssociatePublicIpAddress: true
+
+# Auto Scaling Group for Webserver and Appserver
+
+  WebserverAutoScalingGroup:
+    Type: AWS::AutoScaling::AutoScalingGroup
+    Properties:
+      AutoScalingGroupName: prod-webservers-autoscaling-group
+      LaunchTemplate:
+         LaunchTemplateId: !Ref WebServerLaunchTemplate
+      VPCZoneIdentifier: !Ref ProdVPC
+      AvailabilityZones:
+        - !Ref WebserverSubnet1
+        - !Ref WebserverSubnet2
+      
